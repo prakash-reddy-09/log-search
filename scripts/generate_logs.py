@@ -10,7 +10,7 @@ import random
 import  sys
 from datetime import datetime, timedelta
 
-lines = int(sys.argv[1]]) if len(sys.arg) > 1 else 100_000
+lines = int(sys.argv[1]) if len(sys.argv) > 1 else 100_000
 out = sys.argv[2] if len(sys.argv) > 2 else "sample.log"
 
 levels = ["INFO"] * 70 + ["DEBUG"] * 15 + ["WARN"] * 10 + ["ERROR"] * 5
@@ -28,5 +28,5 @@ with open(out, "w") as f:
         t += timedelta(milliseconds=random.randint(1, 400))
         lvl = random.choice(levels)
         msg = random.choice(messages[lvl]).format(n=random.randint(1, 5000))
-        f.write(f"{t:%Y-%m-%d %H:%M:%S} {lvl} [{random.choice(services))}] {msg}\n")
+        f.write(f"{t:%Y-%m-%d %H:%M:%S} {lvl} [{random.choice(services)}] {msg}\n")
 print(f"wrote {lines} lines to {out}")

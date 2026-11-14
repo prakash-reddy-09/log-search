@@ -155,6 +155,44 @@ int search(const std::string& logPath, const std::string& prefix, std::size_t li
         return 0;
     }
 
+    std::vector<const Postings*> lists;
+    for(const auto& entry: found) lists.push_back(&entry.second);
+    std::sort(lists.begin(), lists.end(), [](const Postings* a, const Postings* b) {return a->size() < b->size(); });
+
+    Postings result = *lists[0];
+    for(std::size_t i = 1; i < lists.size() && !result.empty(); ++i)
+    {
+        Postings next;
+        std::set_intersection(result.begin(), result.end(), lists[i]->begin(), lists[i]->end(), std::back_inserter(next));
+        result.swap(next);
+    }
+
+    std::cout << "TOTAL\t" << result.size() << "\n";
+
+    std::ifstream offsets(prefix + ".off", std::ios::binary);
+    std::ifstream log(logPath, std::ios::binary);
+    if( !offsets || !log)
+    {
+        std::cerr << "cannot open log or offsets file\n";
+        return 1;
+    }
+
+    const std::size_t count = std::min(limit, result.size());
+    std::string line;
+    for(std::size_t i = 0; i < count; i++)
+    {
+        const std::uint32_t id = result[i];
+        std::uint64_t offset = 0;
+        offsets.seekg(static_cast<std::streamoff>(id) * sizeof(offset));
+        offsets.read(reinterpret_cast<char*>(&offset), sizeof(offset));
+
+        log.clear();
+        log.seekg(static_cast<std::streamoff>(offset));
+        if(!line.empty() && line.back() == '\r') line.pop_back();
+
+        std::cout << (id + 1) << '\t' << line << '\n';
+    }
+
     return 0;
 }
 

@@ -1,1 +1,15 @@
-.idea
+# Generated log files
+api/data/
+sample.log
+
+# C++ build files
+indexer/build/
+
+# IDE files
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+

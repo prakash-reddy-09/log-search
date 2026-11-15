@@ -13,3 +13,4 @@ indexer/build/
 .DS_Store
 Thumbs.db
 
+api/target

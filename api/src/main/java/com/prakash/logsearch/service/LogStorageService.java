@@ -26,7 +26,7 @@ public class LogStorageService
     private final Path dir;
     private final IndexerClient indexer;
 
-    public LogStorageService(@Value("${losearch.storage-dir}") String storageDir, IndexerClient indexer) throws IOException
+    public LogStorageService(@Value("${logsearch.storage-dir}") String storageDir, IndexerClient indexer) throws IOException
     {
         this.dir = Path.of(storageDir).toAbsolutePath().normalize();
         this.indexer = indexer;
@@ -35,7 +35,7 @@ public class LogStorageService
 
     public LogFileInfo save(MultipartFile file) throws IOException {
         if(file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST), "File is empty");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty");
         }
 
         String original = file.getOriginalFilename() == null ? "upload" : file.getOriginalFilename();
@@ -58,10 +58,10 @@ public class LogStorageService
     public List<LogFileInfo> list() throws IOException
     {
         try (Stream<Path> files = Files.list(dir)) {
-            
+
             return files.filter(p -> p.getFileName().toString().endsWith(".log"))
                         .sorted(Comparator.comparing(p -> p.getFileName().toString()))
-                        .map(p -> { 
+                        .map(p -> {
                             String name = p.getFileName().toString();
 
                             try {
@@ -76,13 +76,13 @@ public class LogStorageService
     }
 
 
-    publlic Path logPath(String id) {
-        if(!SAFE_ID.matcher(id).matches() || id.contains.("..")) {
+    public Path logPath(String id) {
+        if(!SAFE_ID.matcher(id).matches() || id.contains("..")) {
 
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid log id");
         }
 
-        Path path = dir.resolve(id + ".log")
+        Path path = dir.resolve(id + ".log");
         if (!Files.exists(path)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such log: " + id);
         }

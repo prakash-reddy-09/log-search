@@ -1,12 +1,13 @@
 package com.prakash.logsearch.controller;
 
 
-import java.IO.Exception;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import com.prakash.logsearch.models.LogFileInfo;
 import com.prakash.logsearch.models.LogLine;
+import com.prakash.logsearch.models.SearchResponse;
 
 import com.prakash.logsearch.service.LogStorageService;
 import com.prakash.logsearch.service.SearchService;
@@ -38,7 +39,7 @@ public class LogController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @ResponseStats(Http.Status.CREATED)
+    @ResponseStatus(HttpStatus.CREATED)
     public LogFileInfo upload(@RequestParam("file") MultipartFile file) throws IOException {
         return storage.save(file);
     }
@@ -58,11 +59,11 @@ public class LogController {
             @PathVariable String id,
             @RequestParam(defaultValue = "") String q,
             @RequestParam(required = false) String level,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO_DATE_TIME) LocalDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO_DATE_TIME) LocalDateTime to,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
             @RequestParam(defaultValue = "100") int limit,
             @RequestParam(defaultValue = "cpp") String engine) {
-                
+
                 int safeLimit = Math.max(1, Math.min(limit, 1000));
                 return searchService.search(id, q, level, from, to, safeLimit, engine);
             }

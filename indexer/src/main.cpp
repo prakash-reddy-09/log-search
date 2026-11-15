@@ -37,7 +37,7 @@ std::vector<std::string> tokenize(const std::string& text)
             current.push_back(static_cast<char>(std::tolower(c)));
         } else if(!current.empty()) {
                 tokens.push_back(current);
-                current.clear();    
+                current.clear();
             }
     }
 
@@ -53,7 +53,7 @@ int build(const std::string& logPath, const std::string& prefix)
         std::cerr << "cannot open log file: " << logPath << "\n";
         return 1;
     }
-    
+
     std::ofstream offsets(prefix + ".off" , std::ios::binary);
     if(!offsets)
     {
@@ -97,73 +97,68 @@ int build(const std::string& logPath, const std::string& prefix)
         }
         idx << '\n';
     }
-    
+
     std::cout << "lines=" << lineId << " terms=" << index.size() << "\n";
     return 0;
 }
 
-int search(const std::string& logPath, const std::string& prefix, std::size_t limit, std::vector<std::string>& queryArgs)
-{
-    std::set<std::string, std::less<>> terms;
-    for(const auto& arg: queryArgs)
-    {
+int search(const std::string& logPath, const std::string& prefix,
+           std::size_t limit, const std::vector<std::string>& queryArgs) {
+    std::set<std::string, std::less<>> terms;  // transparent: lookup by string_view
+    for (const auto& arg : queryArgs)
         for (auto& t : tokenize(arg)) terms.insert(std::move(t));
-    }
 
-    if (terms.empty())
-    {
+    if (terms.empty()) {
         std::cout << "TOTAL\t0\n";
+        return 0;
     }
 
     std::ifstream idx(prefix + ".idx", std::ios::binary);
-    if(!idx)
-    {
+    if (!idx) {
         std::cerr << "cannot open index file (was the log indexed?)\n";
         return 1;
     }
 
+    // Scan the index once and keep only the postings for the query terms.
     std::unordered_map<std::string, Postings> found;
     std::string row;
-    while(found.size() < terms.size() && std::getline(idx, row))
-    {
+    while (found.size() < terms.size() && std::getline(idx, row)) {
         const auto tab = row.find('\t');
-        if(tab == std::string::npos) continue;
+        if (tab == std::string::npos) continue;
         std::string_view key(row.data(), tab);
         auto it = terms.find(key);
-        if(it == terms.end()) continue;
+        if (it == terms.end()) continue;
 
         Postings ids;
         std::uint32_t current = 0;
-        for(std::size_t i = tab + 1; i < row.size(); ++i)
-        {
-            if(row[i] == ',')
-            {
+        for (std::size_t i = tab + 1; i < row.size(); ++i) {
+            if (row[i] == ',') {
                 ids.push_back(current);
                 current = 0;
             } else {
                 current = current * 10 + static_cast<std::uint32_t>(row[i] - '0');
             }
         }
-
         ids.push_back(current);
         found.emplace(*it, std::move(ids));
     }
 
-    if(found.size() < terms.size())
-    {
+    if (found.size() < terms.size()) {  // some term never appears
         std::cout << "TOTAL\t0\n";
         return 0;
     }
 
+    // Intersect the postings lists, smallest first
     std::vector<const Postings*> lists;
-    for(const auto& entry: found) lists.push_back(&entry.second);
-    std::sort(lists.begin(), lists.end(), [](const Postings* a, const Postings* b) {return a->size() < b->size(); });
+    for (const auto& entry : found) lists.push_back(&entry.second);
+    std::sort(lists.begin(), lists.end(),
+              [](const Postings* a, const Postings* b) { return a->size() < b->size(); });
 
     Postings result = *lists[0];
-    for(std::size_t i = 1; i < lists.size() && !result.empty(); ++i)
-    {
+    for (std::size_t i = 1; i < lists.size() && !result.empty(); ++i) {
         Postings next;
-        std::set_intersection(result.begin(), result.end(), lists[i]->begin(), lists[i]->end(), std::back_inserter(next));
+        std::set_intersection(result.begin(), result.end(), lists[i]->begin(),
+                              lists[i]->end(), std::back_inserter(next));
         result.swap(next);
     }
 
@@ -171,16 +166,14 @@ int search(const std::string& logPath, const std::string& prefix, std::size_t li
 
     std::ifstream offsets(prefix + ".off", std::ios::binary);
     std::ifstream log(logPath, std::ios::binary);
-    if( !offsets || !log)
-    {
+    if (!offsets || !log) {
         std::cerr << "cannot open log or offsets file\n";
         return 1;
     }
 
     const std::size_t count = std::min(limit, result.size());
     std::string line;
-    for(std::size_t i = 0; i < count; i++)
-    {
+    for (std::size_t i = 0; i < count; ++i) {
         const std::uint32_t id = result[i];
         std::uint64_t offset = 0;
         offsets.seekg(static_cast<std::streamoff>(id) * sizeof(offset));
@@ -188,11 +181,11 @@ int search(const std::string& logPath, const std::string& prefix, std::size_t li
 
         log.clear();
         log.seekg(static_cast<std::streamoff>(offset));
-        if(!line.empty() && line.back() == '\r') line.pop_back();
+        std::getline(log, line);
+        if (!line.empty() && line.back() == '\r') line.pop_back();
 
         std::cout << (id + 1) << '\t' << line << '\n';
     }
-
     return 0;
 }
 

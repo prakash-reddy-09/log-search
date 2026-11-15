@@ -31,8 +31,8 @@ import com.prakash.logsearch.models.LogLine;
 @Service
 public class SearchService
 {
-        
-    private static final Set<String> LEVEL = Set.of("TRACE", "DEBUG", "INFO", "WARN", "ERROR");
+
+    private static final Set<String> LEVELS = Set.of("TRACE", "DEBUG", "INFO", "WARN", "ERROR");
     private static final DateTimeFormatter TIMESTAMP = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private static final int FETCH_CAP = 100_000;
@@ -40,13 +40,13 @@ public class SearchService
     private final LogStorageService storage;
     private final IndexerClient indexer;
 
-    public SearchService(StorageService storage, IndexerClient indexer)
+    public SearchService(LogStorageService storage, IndexerClient indexer)
     {
         this.storage = storage;
         this.indexer = indexer;
     }
 
-    public SearchResponse search(String id, String q, String level, LocalDateTime from, LocaDatetime to, int limit, String engine)
+    public SearchResponse search(String id, String q, String level, LocalDateTime from, LocalDateTime to, int limit, String engine)
     {
         Path logFile = storage.logPath(id);
 

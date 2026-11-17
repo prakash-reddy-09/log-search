@@ -5,6 +5,11 @@ A high-performance log search engine built with **C++17 and Java Spring Boot**.
 Upload large log files, construct an inverted index, and search through millions of log entries efficiently. The project combines the performance of a C++ search engine with the flexibility of a Java REST API.
 
 ![Project Screenshot](output/log-search-output.png)
+
+## Updated Frontend (React)
+![Project Screenshot](output/frontend1.png)
+![Project Screenshot](output/frontend2.png)
+
 ## 📊 Performance Benchmarks
 
 To evaluate the performance of the inverted index, the C++ search engine was compared against the Java baseline implementation, which performs a linear scan of the log file.
